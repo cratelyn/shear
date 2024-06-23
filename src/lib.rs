@@ -6,6 +6,7 @@
     future_incompatible,
     keyword_idents,
     let_underscore,
+    missing_docs,
     nonstandard_style,
     unused,
     // clippy lints:
