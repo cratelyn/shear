@@ -15,7 +15,7 @@ mod relevant_types_can_be_limited {
 
     use super::*;
 
-    #[allow(unreachable_code, unused_variables)] // a `!` value causes these warnings.
+    #[allow(unreachable_code, unused_variables, clippy::diverging_sub_expression)]
     fn can_be_limited<T: shear::str::Limited>() {
         let value: T = unimplemented!("");
         value.limited(0).pipe(drop);

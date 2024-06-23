@@ -48,6 +48,8 @@ pub trait Limited {
     fn limited(&self, length: usize) -> String;
 }
 
+// === impl s: asref<str> ===
+
 impl<S> Limited for S
 where
     S: AsRef<str>,

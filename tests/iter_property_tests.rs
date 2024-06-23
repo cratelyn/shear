@@ -19,7 +19,7 @@ fn iterator_knows_when_it_is_finished_(TestInput { value, length }: TestInput) {
     let length = std::cmp::min(length, value.len());
 
     for _ in 0..length {
-        iter.next().map(drop);
+        iter.next().pipe(drop);
         iter.is_finished()
             .not()
             .pipe(|not| assert!(not, "iterator should not be finished"));
@@ -113,9 +113,8 @@ fn a_size_equal_to_or_smaller_than_contd_procedes_directly_to_limiting_(
 ) {
     let actual = value.chars().limited(length).collect::<String>();
     let expected: regex::Regex = {
-        std::iter::repeat("\\.")
-            .take(length)
-            .collect::<String>()
+        "\\."
+            .repeat(length)
             .as_str()
             .pipe(regex::Regex::new)
             .expect("should be a valid regex")
