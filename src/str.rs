@@ -1,7 +1,3 @@
-//! interfaces for limiting strings.
-//!
-//! see [`Limited`] for more information.
-
 /// an extension trait for limiting strings.
 ///
 /// # examples
