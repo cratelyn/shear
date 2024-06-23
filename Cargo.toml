@@ -2,6 +2,7 @@
 authors                = ["katelyn martin <me+cratelyn@katelyn.world>"]
 description            = "a library for trimming excess contents from things"
 edition                = "2021"
+license                = "MIT"
 name                   = "shear"
 repository             = "https://github.com/cratelyn/shear"
 version                = "0.1.0"
