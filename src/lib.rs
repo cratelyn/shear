@@ -33,6 +33,6 @@ pub mod iter;
 
 /// [`String`] limiting.
 ///
-/// see [`Limited::limited()`][self::str::Limited::limited] for more information.
+/// see [`Limited::trim_to_length()`][self::str::Limited::trim_to_length] for more information.
 #[cfg(feature = "str")]
 pub mod str;

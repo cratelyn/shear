@@ -1,8 +1,15 @@
 //! this is a suite of property tests exercising [`LimitedIter<I>`].
 
-use {proptest::proptest, shear::iter::Limited, std::ops::Not, strategy::*, tap::Pipe};
+use {
+    self::{strategy::*, test_char_iter::TestIter},
+    proptest::proptest,
+    shear::iter::Limited,
+    std::ops::Not,
+    tap::{Conv, Pipe},
+};
 
 mod strategy;
+mod test_char_iter;
 
 // === test is_finished() ===
 
@@ -15,7 +22,7 @@ proptest! {
 }
 
 fn iterator_knows_when_it_is_finished_(TestInput { value, length }: TestInput) {
-    let mut iter = value.chars().limited(length);
+    let mut iter = value.chars().conv::<TestIter>().limited(length);
     let length = std::cmp::min(length, value.len());
 
     for _ in 0..length {
@@ -55,7 +62,11 @@ fn shorter_values_are_provided_as_is_(
         length,
     }: TestInput,
 ) {
-    let output = input.chars().limited(length).collect::<String>();
+    let output = input
+        .chars()
+        .conv::<TestIter>()
+        .limited(length)
+        .collect::<String>();
     assert_eq!(
         input, output,
         "a sequence that fits into its length should be returned unaltered"
@@ -74,11 +85,15 @@ proptest! {
 
 fn longer_values_are_truncated_(TestInput { value, length }: TestInput) {
     use regex::Regex;
-    let actual = value.chars().limited(length).collect::<String>();
+    let actual = value
+        .chars()
+        .conv::<TestIter>()
+        .limited(length)
+        .collect::<String>();
     let expected: Regex = {
         let contd = "...";
         let n = length - contd.len();
-        let prefix = value.chars().take(n).collect::<String>();
+        let prefix = value.chars().conv::<TestIter>().take(n).collect::<String>();
         format!("{prefix}\\.\\.\\.")
             .as_str()
             .pipe(Regex::new)
@@ -111,7 +126,11 @@ fn a_size_equal_to_or_smaller_than_contd_procedes_directly_to_limiting_(
     value: String,
     length: usize,
 ) {
-    let actual = value.chars().limited(length).collect::<String>();
+    let actual = value
+        .chars()
+        .conv::<TestIter>()
+        .limited(length)
+        .collect::<String>();
     let expected: regex::Regex = {
         "\\."
             .repeat(length)

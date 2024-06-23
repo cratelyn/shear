@@ -18,7 +18,7 @@ mod relevant_types_can_be_limited {
     #[allow(unreachable_code, unused_variables, clippy::diverging_sub_expression)]
     fn can_be_limited<T: shear::str::Limited>() {
         let value: T = unimplemented!("");
-        value.limited(0).pipe(drop);
+        value.trim_to_length(0).pipe(drop);
     }
 
     #[allow(dead_code)] // this is a compile-time check that needn't be called.
@@ -42,7 +42,7 @@ mod empty_str_can_be_limited {
     }
 
     fn empty_str_can_be_limited_(len: usize) {
-        "".limited(len)
+        "".trim_to_length(len)
             .pipe(|s| assert_eq!(s, "", "limited string should still be empty"))
     }
 }
@@ -62,7 +62,7 @@ mod strs_can_be_truncated {
     }
 
     fn strs_can_be_truncated_(TestInput { value, length }: TestInput) {
-        let limited = value.clone().limited(length);
+        let limited = value.clone().trim_to_length(length);
         let expected: Regex = {
             let prefix = (length - 3)
                 .pipe(|upper| 0..upper)

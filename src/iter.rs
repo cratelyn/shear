@@ -69,30 +69,12 @@ enum Inner<I: Iterator> {
     Finished,
 }
 
-// === impl i: iterator ===
-
-/// character iterators can be limited with elipses.
-impl<I> Limited for I
-where
-    I: Iterator<Item = char> + Sized,
-{
-    fn limited(self, length: usize) -> LimitedIter<Self> {
-        Inner::new(self, length).pipe(LimitedIter::new)
-    }
-
-    type ContdIter = std::str::Chars<'static>;
-
-    fn contd() -> Self::ContdIter {
-        "...".chars()
-    }
-}
-
 // === impl limitediter ===
 
-impl<I: Iterator> LimitedIter<I> {
+impl<I: Iterator + Limited> LimitedIter<I> {
     /// returns a new [`LimitedIter`].
-    fn new(inner: Inner<I>) -> Self {
-        Self { inner }
+    pub fn new(iter: I, length: usize) -> Self {
+        Inner::new(iter, length).pipe(|inner| Self { inner })
     }
 }
 
