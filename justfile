@@ -40,3 +40,6 @@ watch-check-short:
 
 watch-test:
     cargo watch --clear --why --shell 'just test'
+
+watch-ci:
+    cargo watch --clear --why --shell 'just ci'
