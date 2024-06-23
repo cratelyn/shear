@@ -20,15 +20,20 @@ doc:
 doc-open:
     cargo doc --open
 
+doc-test:
+    cargo test --doc
+
 lint:
     cargo clippy --all-targets
 
 test:
     cargo nextest run --all-features --all-targets
 
+test-all: test doc-test
+
 # === ci: build, document, test, and lint
 
-ci: build doc test lint
+ci: build doc test-all lint
 
 # === watch command output === #
 
