@@ -14,7 +14,9 @@ pub trait Limited: Iterator + Sized {
     /// being "limited", or truncated.
     ///
     /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
-    fn limited(self, length: usize) -> LimitedIter<Self>;
+    fn limited(self, length: usize) -> LimitedIter<Self> {
+        LimitedIter::new(self, length)
+    }
 
     /// the type of iterator returned by [`Limited::contd()`].
     type ContdIter: Iterator<Item = Self::Item>;
