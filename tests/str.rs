@@ -2,7 +2,9 @@
 
 #![cfg(feature = "str")]
 
-use {self::strategy::TestInput, proptest::proptest, regex::Regex, shear::str::Limited, tap::Pipe};
+use {
+    self::strategy::TestInput, proptest::proptest, regex::Regex, shear::str::LimitedExt, tap::Pipe,
+};
 
 mod strategy;
 
@@ -16,9 +18,9 @@ mod relevant_types_can_be_limited {
     use super::*;
 
     #[allow(unreachable_code, unused_variables, clippy::diverging_sub_expression)]
-    fn can_be_limited<T: shear::str::Limited>() {
+    fn can_be_limited<T: shear::str::LimitedExt>() {
         let value: T = unimplemented!("");
-        value.trim_to_length(0).pipe(drop);
+        value.trim_to_length_ascii(0).pipe(drop);
     }
 
     #[allow(dead_code)] // this is a compile-time check that needn't be called.
@@ -42,16 +44,14 @@ mod empty_str_can_be_limited {
     }
 
     fn empty_str_can_be_limited_(len: usize) {
-        "".trim_to_length(len)
+        "".trim_to_length_ascii(len)
             .pipe(|s| assert_eq!(s, "", "limited string should still be empty"))
     }
 }
 
 /// test that strings can be truncated correctly.
 mod strs_can_be_truncated {
-    use tap::Tap;
-
-    use super::*;
+    use {super::*, tap::Tap};
 
     proptest! {
         #[test]
@@ -62,7 +62,7 @@ mod strs_can_be_truncated {
     }
 
     fn strs_can_be_truncated_(TestInput { value, length }: TestInput) {
-        let limited = value.clone().trim_to_length(length);
+        let limited = value.clone().trim_to_length_ascii(length);
         let expected: Regex = {
             let prefix = (length - 3)
                 .pipe(|upper| 0..upper)
