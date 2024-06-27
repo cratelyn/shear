@@ -1,7 +1,8 @@
 # ======================== development commands ============================= #
 
-# build the project if given no other arguments.
-default: build
+# choose a command if given no other arguments.
+default:
+    just --choose
 
 # === common commands === #
 
