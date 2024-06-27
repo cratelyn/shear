@@ -31,6 +31,14 @@ test:
 
 test-all: test doc-test
 
+# === run examples === #
+
+example-simple:
+    cargo run --example simple
+
+example-verbose:
+    cargo run --example verbose
+
 # === ci: build, document, test, and lint
 
 ci: build doc test-all lint
