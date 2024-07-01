@@ -24,7 +24,7 @@ prop_compose! {
     /// a strategy that generates [`TestInput`] values.
     pub fn input_strategy()
     (
-        value in value_strategy(),
+        value in ascii_lowercase_strategy(),
         length in length_strategy()
     ) -> TestInput {
         TestInput { value, length }
@@ -38,7 +38,7 @@ fn length_strategy() -> impl Strategy<Value = usize> {
 /// returns a [`Strategy`] for strings of lowercase alphabetic characters.
 ///
 /// NB: this string may be empty.
-pub fn value_strategy() -> impl Strategy<Value = String> {
+pub fn ascii_lowercase_strategy() -> impl Strategy<Value = String> {
     "[a-z]{0,1024}"
 }
 
@@ -47,7 +47,7 @@ pub fn value_strategy() -> impl Strategy<Value = String> {
 pub fn value_strategy_non_empty() -> impl Strategy<Value = String> {
     const REASON: &str = "value should be non-empty";
     let is_not_empty = |s: &String| s.is_empty().not();
-    value_strategy().prop_filter(REASON, is_not_empty)
+    ascii_lowercase_strategy().prop_filter(REASON, is_not_empty)
 }
 
 /// returns a [`Strategy`] that creates values that fit into the target width.
