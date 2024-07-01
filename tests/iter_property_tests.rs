@@ -23,7 +23,7 @@ proptest! {
 
 fn iterator_knows_when_it_is_finished_(TestInput { value, length }: TestInput) {
     let mut iter = value.chars().conv::<TestIter>().limited(length);
-    let length = std::cmp::min(length, value.len());
+    let length = std::cmp::min(length, value.chars().count());
 
     for _ in 0..length {
         iter.next().pipe(drop);

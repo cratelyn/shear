@@ -23,6 +23,17 @@ pub trait Limited: Iterator + Sized {
 
     /// returns an iterator of values to use as an indication of truncation.
     fn contd() -> Self::ContdIter;
+
+    /// defines the size of an item in this iterator.
+    ///
+    /// this is how "space" is measured by this limited iterator. for example, how many bytes are
+    /// needed to encode a character if limiting a string according to bytes, or by how many
+    /// columns wide a character is if limiting a string according to visual width.
+    ///
+    /// by default this counts each element as 1.
+    fn element_size(_: &Self::Item) -> usize {
+        1
+    }
 }
 
 /// a "limited" iterator.
@@ -184,7 +195,9 @@ impl<I: Iterator + Limited> Inner<I> {
         }
 
         let contd = I::contd().collect::<Vec<_>>();
-        match length.saturating_sub(contd.len()) {
+        let contd_len = contd.iter().map(I::element_size).sum();
+
+        match length.saturating_sub(contd_len) {
             // the common case: we are emitting the contents of the inner iterator.
             remaining @ 1.. => Self::Running {
                 iter,
@@ -194,7 +207,7 @@ impl<I: Iterator + Limited> Inner<I> {
             // there isn't any room for our inner iterator's contents. we are already limiting.
             0 => {
                 let mut contd = contd;
-                while contd.len() > length {
+                while contd_len > length {
                     contd.pop(); // we should make sure to trim any excess from the `contd` value.
                 }
                 Self::limiting(contd)

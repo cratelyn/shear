@@ -18,6 +18,10 @@ impl<'a> Limited for TestIter<'a> {
     fn contd() -> Self::ContdIter {
         ['.', '.', '.'].into_iter()
     }
+
+    fn element_size(_: &Self::Item) -> usize {
+        1
+    }
 }
 
 impl<'a> Iterator for TestIter<'a> {

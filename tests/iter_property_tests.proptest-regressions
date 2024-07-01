@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 6924a2449c48073a732e3b0927ad842731d70efa7ec354cb8b6ae78d287ce404 # shrinks to input = TestInput { value: "ａ", length: 4 }
+cc 0fe49909794d7409f91e5cf4ab67ef83d90c2af8a8b9a13691c999ad78081637 # shrinks to input = TestInput { value: "ａaaａａａaａａaａaaａaａaａaａaaａaaaaaaａａａａaaaａaａaaａaaａａaａaaａａａａａaaａaaａａａaａａａａａaａａaaａａaaaaaaａaaａaaａａａａａaａaａaａaａjnqｕｚmｗqｃhmqｉiｋvmｓｚjgｙidｌpｈoｚｆjlｅｑｓｋｑanｕiｋｚcgａｙrｙjｔｗlｙmagｇvvｓｍｕldｄｃｌｑｓｇｓcｎｑmexlｉｄｅｇbｈynｆrrouｗpｇurfqzpkｖｈchｓｓｉｍｍsrcｎzredａｌeｐqｉｑｆyualfｆｈｍuｇzbｑyuusrlｎyｆcｅiznｅzgｘｋｐhzｌtｖoｆｊｒdkｃqjgwkxqｙzrｆａvceqiiｆlｅpｉaｂbｆｋｙdｑxyiaｃｙｉblｕｒｙfbtokｂｐｇｉｋhjｇbnxｖｉｖiｔｄｒbhcxcｘlrｐgvｑｃhzxiuikｒｏｂfｏeｔｔｚhrｘｒqsvｌbｊcpｚmｇｗｘeｅｇnｚqpａｑｏｊｆxｐnｌpｓｗｚfhｈeｙsｖvｎｃｄｗｚyiｆhcwofｔgbwｗｉｆｐｚgrwsvａｍffjｕqbｙｂmｚｋzoiｖpaoqｗｎfmａugｄdfｈlbｋｊrkxｕtｚｓｄｔｅｋｍvｐaｌｆａcdfｚｋuwｙｉhexsｐｚkｓｊuｐｙｈｕｓiｎｇｖmjｆdxｍlｔｘｆｎｆgｔｙaａlbｅoｆｓｏhdeｏwｆ", length: 1083 }

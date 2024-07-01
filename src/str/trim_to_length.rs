@@ -36,6 +36,11 @@ where
     fn contd() -> Self::ContdIter {
         E::ellipsis().chars()
     }
+
+    /// counts characters according to their encoded length.
+    fn element_size(c: &char) -> usize {
+        c.len_utf8()
+    }
 }
 
 impl<I, E> Iterator for TrimToLengthIter<I, E>

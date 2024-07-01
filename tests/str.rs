@@ -49,6 +49,17 @@ mod empty_str_can_be_limited {
     }
 }
 
+mod strings_with_various_utf8_character_lengths_can_be_limited {
+    use super::*;
+
+    #[test]
+    fn fullwidth_hello_world_can_be_limited() {
+        "Ｈｅｌｌｏ, ｗｏｒｌｄ!"
+            .trim_to_length_ascii(20)
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌｏ, ...", "limited string should still be empty"))
+    }
+}
+
 /// test that strings can be truncated correctly.
 mod strs_can_be_truncated {
     use {super::*, tap::Tap};
@@ -64,17 +75,24 @@ mod strs_can_be_truncated {
     fn strs_can_be_truncated_(TestInput { value, length }: TestInput) {
         let limited = value.clone().trim_to_length_ascii(length);
         let expected: Regex = {
-            let prefix = (length - 3)
-                .pipe(|upper| 0..upper)
-                .pipe(|range| &value[range]);
+            let prefix = {
+                let mut s = String::new();
+                let mut remaining = length - 3;
+                for c in value.chars() {
+                    let len = c.len_utf8();
+                    if remaining >= len {
+                        s.push(c);
+                        remaining -= len;
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                s
+            };
             let suffix = "...".chars();
             let extend = |s: &mut String| s.extend(suffix);
-            prefix
-                .pipe(str::to_owned)
-                .tap_mut(extend)
-                .as_str()
-                .pipe(Regex::new)
-                .unwrap()
+            prefix.tap_mut(extend).as_str().pipe(Regex::new).unwrap()
         };
 
         expected.is_match(&limited).pipe(|is| {
