@@ -1,10 +1,11 @@
-/// [`Strategy`] generators for property tests.
-///
-/// most importantly, this provides a [`TestInput`] type and an accompanying [`input_strategy()`]
-/// that can be used to generate inputs for a property test.
-///
-/// use [`values_that_need_truncation()`] and [`values_that_fit()`] for values that do or do not
-/// need to be limited, respectively.
+//! [`Strategy`] generators for property tests.
+//!
+//! most importantly, this provides a [`TestInput`] type and an accompanying [`input_strategy()`]
+//! that can be used to generate inputs for a property test.
+//!
+//! use [`values_that_need_truncation()`] and [`values_that_fit()`] for values that do or do not
+//! need to be limited, respectively.
+
 use {
     proptest::{prop_compose, strategy::Strategy},
     std::ops::Not,
