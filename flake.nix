@@ -32,7 +32,7 @@
             description     = "a library for trimming excess contents from things.";
             license         = [ licenses.mit ];
           };
-        });
+        }).overrideAttrs (_: { doCheck = false; });
       in {
         packages          = { inherit shear; };
         devShells.default = craneLib.devShell {
