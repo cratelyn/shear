@@ -1,5 +1,5 @@
 use {
-    std::{iter::Peekable, ops::SubAssign},
+    std::iter::Peekable,
     tap::{Pipe, TapOptional},
 };
 
@@ -115,7 +115,10 @@ impl<I: Iterator + Limited> Iterator for LimitedIter<I> {
                 iter,
                 remaining,
             } => {
-                let _ = todo!();
+                match Self::next_if_fits(iter, remaining) {
+                    Ok(next) => return next,
+                    Err(()) => { /* the next item won't fit. */ }
+                }
 
                 // collect the final amount of space available, and check if the sequence ended.
                 *inner = if let Some(tail) = Self::collect_tail(iter, contd.len()) {
