@@ -109,22 +109,14 @@ impl<I: Iterator + Limited> Iterator for LimitedIter<I> {
         }
 
         match inner {
-            // if we have space remaining, emit the next element in the sequence.
-            Running {
-                iter,
-                contd: _,
-                remaining: remaining @ 1..,
-            } => {
-                remaining.sub_assign(1);
-                next_and_mark_finished!(iter)
-            }
-
             // if we have no more space remaining, then we should begin emitting the `contd` items.
             Running {
                 contd,
                 iter,
-                remaining: 0..,
+                remaining,
             } => {
+                let _ = todo!();
+
                 // collect the final amount of space available, and check if the sequence ended.
                 *inner = if let Some(tail) = Self::collect_tail(iter, contd.len()) {
                     // the rest of the sequence fits, emit that without truncating.
@@ -148,6 +140,7 @@ impl<I: Iterator + Limited> LimitedIter<I> {
     /// returns the "tail" of an [`Iterator`].
     ///
     /// if there are more than `len` items remaining in the iterator, this returns `None`.
+    // TODO: kate
     fn collect_tail(iter: &mut Peekable<I>, len: usize) -> Option<Vec<I::Item>> {
         let mut fits = false;
         let mut tail = Vec::with_capacity(len);
@@ -168,6 +161,29 @@ impl<I: Iterator + Limited> LimitedIter<I> {
         }
 
         fits.then_some(tail)
+    }
+
+    /// takes the next item from the iterator, if there is space remaining.
+    ///
+    /// NB: this function decrements `remaining`.
+    ///
+    /// - returns `Ok(Some(next))` if the next item fits in the remaining space.
+    /// - returns `Ok(None)` if the next item does not exist.
+    /// - returns `Err(())` if there is no space remaining.
+    fn next_if_fits(iter: &mut Peekable<I>, remaining: &mut usize) -> Result<Option<I::Item>, ()> {
+        // determine how much space the next item in the sequence needs.
+        let Some(size) = iter.peek().map(I::element_size) else {
+            return Ok(None); // we have reached the end of the iterator.
+        };
+
+        let fits = size <= *remaining; // does the item fit in the remaining space?
+        *remaining = remaining.saturating_sub(size); // update the amount of space remaining.
+
+        return if fits {
+            iter.next().pipe(Ok) // return the next item in the sequence, it fits!
+        } else {
+            Err(()) // signal that we have run out of space.
+        };
     }
 }
 
