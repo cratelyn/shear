@@ -1,13 +1,16 @@
-/// [`Strategy`] generators for property tests.
-///
-/// most importantly, this provides a [`TestInput`] type and an accompanying [`input_strategy()`]
-/// that can be used to generate inputs for a property test.
-///
-/// use [`values_that_need_truncation()`] and [`values_that_fit()`] for values that do or do not
-/// need to be limited, respectively.
+//! [`Strategy`] generators for property tests.
+//!
+//! most importantly, this provides a [`TestInput`] type and an accompanying [`input_strategy()`]
+//! that can be used to generate inputs for a property test.
+//!
+//! use [`values_that_need_truncation()`] and [`values_that_fit()`] for values that do or do not
+//! need to be limited, respectively.
+
 use {
     proptest::{prop_compose, strategy::Strategy},
     std::ops::Not,
+    tap::TryConv,
+    unicode_width::UnicodeWidthChar,
 };
 
 /// an input to a property test.
@@ -34,11 +37,67 @@ fn length_strategy() -> impl Strategy<Value = usize> {
     4..2048_usize
 }
 
+fn value_strategy() -> impl Strategy<Value = String> {
+    let chars = ascii_lowercase_char_strategy();
+    let sizes = 0..1024;
+    let collect = |s: Vec<char>| s.into_iter().collect::<String>();
+
+    proptest::collection::vec(chars, sizes).prop_map(collect)
+}
+
+/// returns a [`Strategy`] for lowercase alphabetic characters.
+pub fn ascii_lowercase_char_strategy() -> impl Strategy<Value = char> {
+    (b'a'..=b'z')
+        // `Range<char>` does not implement `Strategy`. (TODO: see `proptest::char`)
+        .prop_map(|b: u8| b as char)
+        // check that these characters have the properties that we expect them to.
+        .prop_map(|c: char| {
+            debug_assert_eq!(c.width(), Some(1), "ascii characters are 1 column wide");
+            debug_assert_eq!(c.len_utf8(), 1, "ascii characters are 1 byte long");
+            c
+        })
+}
+
+/// returns a [`Strategy`] for lowercase "fullwidth" characters.
+///
+/// these are characters `U+FF41` through `U+FF5A`.
+pub fn fullwidth_lowercase_char_strategy() -> impl Strategy<Value = char> {
+    let fullwidth_a = 'ａ' as u32; // the `ａ` character.
+    let fullwidth_z = 'ｚ' as u32; // the `ｚ` character.
+    (fullwidth_a..=fullwidth_z)
+        // `Range<char>` does not implement `Strategy`.
+        .prop_map(|b: u32| b.try_conv::<char>().unwrap())
+        .prop_map(|c: char| {
+            debug_assert_eq!(
+                c.width(),
+                Some(2),
+                "fullwidth characters are 2 columns wide"
+            );
+            debug_assert_eq!(c.len_utf8(), 3, "fullwidth characters are 3 byte long");
+            c
+        })
+}
+
 /// returns a [`Strategy`] for strings of lowercase alphabetic characters.
 ///
 /// NB: this string may be empty.
-pub fn value_strategy() -> impl Strategy<Value = String> {
-    "[a-z]{0,1024}"
+pub fn ascii_lowercase_strategy() -> impl Strategy<Value = String> {
+    let chars = ascii_lowercase_char_strategy();
+    let sizes = 0..1024;
+    let collect = |s: Vec<char>| s.into_iter().collect::<String>();
+
+    proptest::collection::vec(chars, sizes).prop_map(collect)
+}
+
+/// returns a [`Strategy`] for strings of lowercase alphabetic characters.
+///
+/// NB: this string may be empty.
+pub fn fullwidth_lowercase_strategy() -> impl Strategy<Value = String> {
+    let chars = fullwidth_lowercase_char_strategy();
+    let sizes = 0..1024;
+    let collect = |s: Vec<char>| s.into_iter().collect::<String>();
+
+    proptest::collection::vec(chars, sizes).prop_map(collect)
 }
 
 /// returns a [`Strategy`] for *non-empty* string of lowercase alphabetic characters.
@@ -46,7 +105,10 @@ pub fn value_strategy() -> impl Strategy<Value = String> {
 pub fn value_strategy_non_empty() -> impl Strategy<Value = String> {
     const REASON: &str = "value should be non-empty";
     let is_not_empty = |s: &String| s.is_empty().not();
-    value_strategy().prop_filter(REASON, is_not_empty)
+    ascii_lowercase_strategy()
+        .boxed()
+        .prop_union(fullwidth_lowercase_strategy().boxed())
+        .prop_filter(REASON, is_not_empty)
 }
 
 /// returns a [`Strategy`] that creates values that fit into the target width.

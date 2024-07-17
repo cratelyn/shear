@@ -1,5 +1,5 @@
 use {
-    std::{iter::Peekable, ops::SubAssign},
+    std::iter::Peekable,
     tap::{Pipe, TapOptional},
 };
 
@@ -23,6 +23,17 @@ pub trait Limited: Iterator + Sized {
 
     /// returns an iterator of values to use as an indication of truncation.
     fn contd() -> Self::ContdIter;
+
+    /// defines the size of an item in this iterator.
+    ///
+    /// this is how "space" is measured by this limited iterator. for example, how many bytes are
+    /// needed to encode a character if limiting a string according to bytes, or by how many
+    /// columns wide a character is if limiting a string according to visual width.
+    ///
+    /// by default this counts each element as 1.
+    fn element_size(_: &Self::Item) -> usize {
+        1
+    }
 }
 
 /// a "limited" iterator.
@@ -50,18 +61,12 @@ enum Inner<I: Iterator> {
         remaining: usize,
         contd: Vec<I::Item>,
     },
-    /// the iterator is limiting the value.
+    /// the iterator is emitting the "tail" of the sequence.
     ///
-    /// in this state, the iterator is emitting the contents of [`I::contd()`].
-    Limiting {
-        iter: Peekable<<Vec<I::Item> as IntoIterator>::IntoIter>,
-    },
-    /// the iterator has opted to emit the "tail" of the inner sequence.
-    ///
-    /// this will occur if the the inner sequence is large enough to have *possibly* needed
-    /// truncation, but wasn't needed after all.
+    /// in this state, the iterator is either emitting the contents of [`I::contd()`], or
+    /// possibly the end of the inner iterator's items if they fit in the remaining space.
     Tail {
-        iter: <Vec<I::Item> as IntoIterator>::IntoIter,
+        iter: Peekable<<Vec<I::Item> as IntoIterator>::IntoIter>,
     },
     /// the iterator is finished.
     ///
@@ -98,35 +103,42 @@ impl<I: Iterator + Limited> Iterator for LimitedIter<I> {
         }
 
         match inner {
-            // if we have space remaining, emit the next element in the sequence.
-            Running {
-                iter,
-                contd: _,
-                remaining: remaining @ 1..,
-            } => {
-                remaining.sub_assign(1);
-                next_and_mark_finished!(iter)
-            }
-
-            // if we have no more space remaining, then we should begin emitting the `contd` items.
             Running {
                 contd,
                 iter,
-                remaining: 0..,
+                remaining,
             } => {
-                // collect the final amount of space available, and check if the sequence ended.
-                *inner = if let Some(tail) = Self::collect_tail(iter, contd.len()) {
-                    // the rest of the sequence fits, emit that without truncating.
-                    tail.into_iter().pipe(|iter| Tail { iter })
-                } else {
-                    // the rest of the sequence wouldn't fit. emit the "continued" sequence.
-                    contd.pipe(std::mem::take).pipe(Inner::limiting)
-                };
+                match iter
+                    .peek()
+                    .map(I::element_size) // how much space does the next item take..
+                    .map(|len| remaining.checked_sub(len)) // ..and does it fit?
+                {
+                    // the next item exists, and there is room for this element.
+                    Some(Some(r)) => {
+                        *remaining = r;
+                        next_and_mark_finished!(iter)
+                    }
+                    // the next item exists, but we have to determine whether to truncate.
+                    Some(None) => {
+                        let space = {
+                            let c = contd.iter().map(I::element_size).sum::<usize>();
+                            c + *remaining
+                        };
 
-                self.next() // ...and then poll again for the next item.
+                        *inner = Self::collect_tail(iter, space)
+                            .unwrap_or_else(|| std::mem::take(contd))
+                            .pipe(Inner::tail);
+
+                        self.next()
+                    }
+                    // the inner iterator has finished.
+                    None => {
+                        *inner = Finished;
+                        None
+                    }
+                }
             }
 
-            Limiting { iter } => next_and_mark_finished!(iter),
             Tail { iter } => next_and_mark_finished!(iter),
             Finished => None, /* we are already done. */
         }
@@ -136,27 +148,24 @@ impl<I: Iterator + Limited> Iterator for LimitedIter<I> {
 impl<I: Iterator + Limited> LimitedIter<I> {
     /// returns the "tail" of an [`Iterator`].
     ///
-    /// if there are more than `len` items remaining in the iterator, this returns `None`.
-    fn collect_tail(iter: &mut Peekable<I>, len: usize) -> Option<Vec<I::Item>> {
-        let mut fits = false;
-        let mut tail = Vec::with_capacity(len);
+    /// if the remaining elements of the iterator take more than `remaining` space according to
+    /// [`Limited::element_size()`], this returns `None`.
+    fn collect_tail(iter: &mut Peekable<I>, mut remaining: usize) -> Option<Vec<I::Item>> {
+        let mut tail: Vec<I::Item> = iter
+            .size_hint()
+            .pipe(|(lower, upper)| upper.unwrap_or(lower))
+            .pipe(Vec::with_capacity);
 
-        // take the next `len` items from the provided iterator.
-        for _ in 0..len {
-            match iter.next() {
-                Some(item) => tail.push(item),
-                None => {
-                    fits = true;
-                    break; // we encountered the end of the sequence, so the tail fits.
-                }
+        for item in iter {
+            let size = I::element_size(&item);
+            if size > remaining {
+                return None;
             }
+            remaining -= size;
+            tail.push(item);
         }
 
-        if iter.peek().is_none() {
-            fits = true; // there are no more items remaining, so the tail fits.
-        }
-
-        fits.then_some(tail)
+        Some(tail)
     }
 }
 
@@ -176,37 +185,23 @@ impl<I: Iterator> LimitedIter<I> {
 
 impl<I: Iterator + Limited> Inner<I> {
     /// returns a new [`Inner`].
-    fn new(iter: I, length: usize) -> Self {
-        let mut iter = iter.peekable();
-        if length == 0 || iter.peek().is_none() {
-            // we're already finished if our length is 0, or if given an empty iterator.
-            return Self::Finished;
-        }
-
+    fn new(iter: I, total: usize) -> Self {
+        // collect the continuation sequence, and find out how large it is.
         let contd = I::contd().collect::<Vec<_>>();
-        match length.saturating_sub(contd.len()) {
-            // the common case: we are emitting the contents of the inner iterator.
-            remaining @ 1.. => Self::Running {
-                iter,
+        let contd_size = contd.iter().map(I::element_size).sum();
+
+        match total.checked_sub(contd_size) {
+            Some(0) | None => Self::tail(contd),
+            Some(remaining @ 1..) => Self::Running {
+                iter: iter.peekable(),
                 remaining,
                 contd,
             },
-            // there isn't any room for our inner iterator's contents. we are already limiting.
-            0 => {
-                let mut contd = contd;
-                while contd.len() > length {
-                    contd.pop(); // we should make sure to trim any excess from the `contd` value.
-                }
-                Self::limiting(contd)
-            }
         }
     }
 
     /// returns a new [`Inner`] given a vector of items.
-    fn limiting(contd: Vec<I::Item>) -> Self {
-        contd
-            .into_iter()
-            .peekable()
-            .pipe(|iter| Self::Limiting { iter })
+    fn tail(tail: Vec<I::Item>) -> Self {
+        tail.into_iter().peekable().pipe(|iter| Self::Tail { iter })
     }
 }
