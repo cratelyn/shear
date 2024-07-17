@@ -49,6 +49,96 @@ mod empty_str_can_be_limited {
     }
 }
 
+mod strings_with_various_utf8_character_lengths_can_be_limited {
+    use {
+        shear::str::{ellipsis::Ascii, Limited},
+        tap::Pipe,
+    };
+
+    /// an input string for use in tests below.
+    const HELLO: &str = "Ｈｅｌｌｏ, ｗｏｒｌｄ!";
+
+    #[test]
+    fn twenty_five_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(25)
+            //                      "1234567890123456789012345"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌｏ, ｗｏｒｌｄ!"))
+    }
+
+    #[test]
+    fn twenty_four_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(24)
+            //                      "123456789012345678901234"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌｏ, ｗｏｒｌｄ!"))
+    }
+
+    #[test]
+    fn twenty_three_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(23)
+            //                      "12345678901234567890123"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌｏ, ｗｏｒｌｄ!"))
+    }
+
+    #[test]
+    fn twenty_two_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(22)
+            //                      "1234567890123456789012"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌｏ, ｗｏｒ..."))
+    }
+
+    #[test]
+    fn thirtheen_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(13)
+            //                      "1234567890123"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌｏ..."))
+    }
+
+    #[test]
+    fn twelve_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(12)
+            //                      "12345678901"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌ..."))
+    }
+
+    #[test]
+    fn eleven_columns_wide() {
+        HELLO
+            .trim_to_width::<Ascii>(11)
+            //                      "12345678901"
+            .pipe(|s| assert_eq!(s, "Ｈｅｌｌ..."))
+    }
+
+    #[test]
+    fn five_columns_wide() {
+        "Ｈｅｌｌｏ, ｗｏｒｌｄ!"
+            .trim_to_width::<Ascii>(5)
+            //                      "12345"
+            .pipe(|s| assert_eq!(s, "Ｈ..."))
+    }
+
+    #[test]
+    fn four_columns_wide() {
+        "Ｈｅｌｌｏ, ｗｏｒｌｄ!"
+            .trim_to_width::<Ascii>(4)
+            //                      "123"
+            .pipe(|s| assert_eq!(s, "..."))
+    }
+
+    #[test]
+    fn three_columns_wide() {
+        "Ｈｅｌｌｏ, ｗｏｒｌｄ!"
+            .trim_to_width::<Ascii>(3)
+            //                      "123"
+            .pipe(|s| assert_eq!(s, "..."))
+    }
+}
+
 /// test that strings can be truncated correctly.
 mod strs_can_be_truncated {
     use {super::*, tap::Tap};
@@ -64,17 +154,24 @@ mod strs_can_be_truncated {
     fn strs_can_be_truncated_(TestInput { value, length }: TestInput) {
         let limited = value.clone().trim_to_length_ascii(length);
         let expected: Regex = {
-            let prefix = (length - 3)
-                .pipe(|upper| 0..upper)
-                .pipe(|range| &value[range]);
+            let prefix = {
+                let mut s = String::new();
+                let mut remaining = length - 3;
+                for c in value.chars() {
+                    let len = c.len_utf8();
+                    if remaining >= len {
+                        s.push(c);
+                        remaining -= len;
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                s
+            };
             let suffix = "...".chars();
             let extend = |s: &mut String| s.extend(suffix);
-            prefix
-                .pipe(str::to_owned)
-                .tap_mut(extend)
-                .as_str()
-                .pipe(Regex::new)
-                .unwrap()
+            prefix.tap_mut(extend).as_str().pipe(Regex::new).unwrap()
         };
 
         expected.is_match(&limited).pipe(|is| {
