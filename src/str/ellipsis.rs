@@ -9,6 +9,9 @@ pub trait Ellipsis {
 /// an asci ellipsis.
 pub struct Ascii;
 
+/// a more verbose ellipsis.
+pub struct Contd;
+
 /// a horizontal utf-8 ellipsis.
 pub struct Horizontal;
 
@@ -17,6 +20,14 @@ pub struct Horizontal;
 impl Ellipsis for Ascii {
     fn ellipsis() -> &'static str {
         "..."
+    }
+}
+
+// === impl contd ===
+
+impl Ellipsis for Contd {
+    fn ellipsis() -> &'static str {
+        "... (contd.)"
     }
 }
 
