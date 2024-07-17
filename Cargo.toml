@@ -13,6 +13,7 @@ str                    = []
 
 [dependencies]
 tap                    = { version = "1.0.1" }
+unicode-width          = { version = "0.1.11" }
 
 [dev-dependencies]
 lazy_static            = { version = "1.4.0" }
