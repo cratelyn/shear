@@ -52,6 +52,9 @@ watch-check:
 watch-check-short:
     cargo watch --clear --why --shell 'just check-short'
 
+watch-doc-test:
+    cargo watch --clear --why --shell 'just doc doc-test'
+
 watch-test:
     cargo watch --clear --why --shell 'just test'
 
