@@ -74,35 +74,6 @@ pub trait Limited {
     fn trim_to_width<E: Ellipsis>(&self, length: usize) -> String;
 }
 
-/// an extension trait of [`Limited<E>`].
-///
-/// this defines methods that supply the [`Ellipsis`] to use when limiting a string e.g.,
-/// an [`ellipsis::Ascii`] ellipsis `"..."`.
-pub trait LimitedExt: Limited + AsRef<str> + Sized {
-    /// trim the string using an ascii `"..."` ellipsis.
-    ///
-    /// # examples
-    ///
-    /// ```
-    /// use shear::str::LimitedExt;
-    ///
-    /// let s = "a very long string value";
-    /// let limited = s.trim_to_length_ascii(18);
-    ///
-    /// assert_eq!(limited, "a very long str...");
-    /// assert_eq!(limited.len(), 18);
-    /// ```
-    fn trim_to_length_ascii(&self, length: usize) -> String {
-        <Self as Limited>::trim_to_length::<ellipsis::Ascii>(self, length)
-    }
-
-    /// trim the string using a horizontal `"…"` ellipsis.
-    fn trim_to_length_utf8_horizontal(&self, length: usize) -> String {
-        <Self as Limited>::trim_to_length::<ellipsis::Horizontal>(self, length)
-    }
-}
-impl<S> LimitedExt for S where S: Limited + AsRef<str> {}
-
 // === impl s: asref<str> ===
 
 impl<S> Limited for S
