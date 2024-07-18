@@ -49,15 +49,15 @@ pub struct LimitedIter<I: Iterator> {
 
 /// the inner finite state machine for a [`LimitedIter<I>`].
 ///
-/// ```ignore
-///                       ┏━━━━━━━━━━┓
-///               +---->  ┃ limiting ┃ >--+
-/// ┏━━━━━━━━━━┓  |       ┗━━━━━━━━━━┛    |     ┏━━━━━━━━━━┓
-/// ┃ running  ┃ -+---->  >----------> >--+---> ┃ finished ┃
-/// ┗━━━━━━━━━━┛  |       ┏━━━━━━━━━━┓    |     ┗━━━━━━━━━━┛
-///               +---->  ┃ tail     ┃ >--+
-///                       ┗━━━━━━━━━━┛
+/// ```text,ignore
+/// ┏━━━━━━━━━━┓          ┏━━━━━━━━━━┓          ┏━━━━━━━━━━┓
+/// ┃ running  ┃ ---+-->  ┃ tail     ┃ -------> ┃ finished ┃
+/// ┗━━━━━━━━━━┛    |     ┗━━━━━━━━━━┛    |     ┗━━━━━━━━━━┛
+///                 +---------------------+
 /// ```
+///
+/// the iterator starts in the `Running` phase. it yields items until it eventually reaches the
+/// terminal `Finished` state.
 enum Inner<I: Iterator> {
     /// the iterator is running.
     Running {
