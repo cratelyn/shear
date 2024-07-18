@@ -5,17 +5,17 @@ use {
 
 /// a trait for "limiting" an iterator.
 ///
-/// this is used to wrap an iterator,
+/// [`limited()`][Limited::limited] will transform an iterator, returning a [`LimitedIter<I>`] that
+/// will be limited by `size`.
+///
+/// [`element_size()`][Limited::element_size] determines how "large" an item is. by default, an
+/// identity function that counts items is used, always returning `1`. if an iterator's contents
+/// are too long to fit in `size`, then [`contd()`][Limited::contd] will be yielded, indicating
+/// that the iterator has been limited.
+///
+/// use [`str::Limited`][crate::str::Limited] to limit the contents of strings.
 pub trait Limited: Iterator + Sized {
     /// returns a "limited" iterator.
-    ///
-    /// this will return at most `size` elements. once space is running out, the contents of
-    /// the iterator returned by [`Limited::contd()`] will be used to indicate that the value is
-    /// being "limited", or truncated.
-    ///
-    /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
-    fn limited(self, length: usize) -> LimitedIter<Self> {
-        LimitedIter::new(self, length)
     fn limited(self, size: usize) -> LimitedIter<Self> {
         LimitedIter::new(self, size)
     }
@@ -24,6 +24,8 @@ pub trait Limited: Iterator + Sized {
     type ContdIter: Iterator<Item = Self::Item>;
 
     /// returns an iterator of values to use as an indication of truncation.
+    ///
+    /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
     fn contd() -> Self::ContdIter;
 
     /// defines the size of an item in this iterator.
