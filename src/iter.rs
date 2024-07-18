@@ -16,6 +16,8 @@ pub trait Limited: Iterator + Sized {
     /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
     fn limited(self, length: usize) -> LimitedIter<Self> {
         LimitedIter::new(self, length)
+    fn limited(self, size: usize) -> LimitedIter<Self> {
+        LimitedIter::new(self, size)
     }
 
     /// the type of iterator returned by [`Limited::contd()`].
@@ -78,8 +80,8 @@ enum Inner<I: Iterator> {
 
 impl<I: Iterator + Limited> LimitedIter<I> {
     /// returns a new [`LimitedIter`].
-    pub fn new(iter: I, length: usize) -> Self {
-        Inner::new(iter, length).pipe(|inner| Self { inner })
+    pub fn new(iter: I, size: usize) -> Self {
+        Inner::new(iter, size).pipe(|inner| Self { inner })
     }
 }
 

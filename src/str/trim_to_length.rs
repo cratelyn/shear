@@ -27,8 +27,8 @@ where
     I: Iterator<Item = char> + Sized,
     E: Ellipsis,
 {
-    fn limited(self, length: usize) -> LimitedIter<Self> {
-        LimitedIter::new(self, length)
+    fn limited(self, size: usize) -> LimitedIter<Self> {
+        LimitedIter::new(self, size)
     }
 
     type ContdIter = std::str::Chars<'static>;
