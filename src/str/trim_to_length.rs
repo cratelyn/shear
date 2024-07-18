@@ -27,13 +27,13 @@ where
     I: Iterator<Item = char> + Sized,
     E: Ellipsis,
 {
-    fn limited(self, length: usize) -> LimitedIter<Self> {
-        LimitedIter::new(self, length)
+    fn limited(self, size: usize) -> LimitedIter<Self> {
+        LimitedIter::new(self, size)
     }
 
-    type ContdIter = std::str::Chars<'static>;
+    type Contd = std::str::Chars<'static>;
 
-    fn contd() -> Self::ContdIter {
+    fn contd() -> Self::Contd {
         E::ellipsis().chars()
     }
 

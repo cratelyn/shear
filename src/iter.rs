@@ -5,24 +5,28 @@ use {
 
 /// a trait for "limiting" an iterator.
 ///
-/// this is used to wrap an iterator,
+/// [`limited()`][Limited::limited] will transform an iterator, returning a [`LimitedIter<I>`] that
+/// will be limited by `size`.
+///
+/// [`element_size()`][Limited::element_size] determines how "large" an item is. by default, an
+/// identity function that counts items is used, always returning `1`. if an iterator's contents
+/// are too long to fit in `size`, then [`contd()`][Limited::contd] will be yielded, indicating
+/// that the iterator has been limited.
+///
+/// use [`str::Limited`][crate::str::Limited] to limit the contents of strings.
 pub trait Limited: Iterator + Sized {
     /// returns a "limited" iterator.
-    ///
-    /// this will return at most `size` elements. once space is running out, the contents of
-    /// the iterator returned by [`Limited::contd()`] will be used to indicate that the value is
-    /// being "limited", or truncated.
-    ///
-    /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
-    fn limited(self, length: usize) -> LimitedIter<Self> {
-        LimitedIter::new(self, length)
+    fn limited(self, size: usize) -> LimitedIter<Self> {
+        LimitedIter::new(self, size)
     }
 
     /// the type of iterator returned by [`Limited::contd()`].
-    type ContdIter: Iterator<Item = Self::Item>;
+    type Contd: IntoIterator<Item = Self::Item>;
 
     /// returns an iterator of values to use as an indication of truncation.
-    fn contd() -> Self::ContdIter;
+    ///
+    /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
+    fn contd() -> Self::Contd;
 
     /// defines the size of an item in this iterator.
     ///
@@ -45,15 +49,15 @@ pub struct LimitedIter<I: Iterator> {
 
 /// the inner finite state machine for a [`LimitedIter<I>`].
 ///
-/// ```ignore
-///                       ┏━━━━━━━━━━┓
-///               +---->  ┃ limiting ┃ >--+
-/// ┏━━━━━━━━━━┓  |       ┗━━━━━━━━━━┛    |     ┏━━━━━━━━━━┓
-/// ┃ running  ┃ -+---->  >----------> >--+---> ┃ finished ┃
-/// ┗━━━━━━━━━━┛  |       ┏━━━━━━━━━━┓    |     ┗━━━━━━━━━━┛
-///               +---->  ┃ tail     ┃ >--+
-///                       ┗━━━━━━━━━━┛
+/// ```text,ignore
+/// ┏━━━━━━━━━━┓          ┏━━━━━━━━━━┓          ┏━━━━━━━━━━┓
+/// ┃ running  ┃ ---+-->  ┃ tail     ┃ -------> ┃ finished ┃
+/// ┗━━━━━━━━━━┛    |     ┗━━━━━━━━━━┛    |     ┗━━━━━━━━━━┛
+///                 +---------------------+
 /// ```
+///
+/// the iterator starts in the `Running` phase. it yields items until it eventually reaches the
+/// terminal `Finished` state.
 enum Inner<I: Iterator> {
     /// the iterator is running.
     Running {
@@ -78,8 +82,8 @@ enum Inner<I: Iterator> {
 
 impl<I: Iterator + Limited> LimitedIter<I> {
     /// returns a new [`LimitedIter`].
-    pub fn new(iter: I, length: usize) -> Self {
-        Inner::new(iter, length).pipe(|inner| Self { inner })
+    pub fn new(iter: I, size: usize) -> Self {
+        Inner::new(iter, size).pipe(|inner| Self { inner })
     }
 }
 
@@ -187,7 +191,7 @@ impl<I: Iterator + Limited> Inner<I> {
     /// returns a new [`Inner`].
     fn new(iter: I, total: usize) -> Self {
         // collect the continuation sequence, and find out how large it is.
-        let contd = I::contd().collect::<Vec<_>>();
+        let contd = I::contd().into_iter().collect::<Vec<_>>();
         let contd_size = contd.iter().map(I::element_size).sum();
 
         match total.checked_sub(contd_size) {

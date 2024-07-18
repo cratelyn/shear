@@ -28,11 +28,11 @@
 
 /// [`Iterator`] limiting.
 ///
-/// see [`Limited::limited()`][self::iter::Limited::limited] for more information.
+/// see [`Limited`][self::iter::Limited] for more information.
 pub mod iter;
 
 /// [`String`] limiting.
 ///
-/// see [`Limited::trim_to_length()`][self::str::Limited::trim_to_length] for more information.
+/// see [`Limited`][self::str::Limited] for more information.
 #[cfg(feature = "str")]
 pub mod str;

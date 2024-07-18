@@ -3,7 +3,11 @@
 #![cfg(feature = "str")]
 
 use {
-    self::strategy::TestInput, proptest::proptest, regex::Regex, shear::str::LimitedExt, tap::Pipe,
+    self::strategy::TestInput,
+    proptest::proptest,
+    regex::Regex,
+    shear::str::{ellipsis, Limited},
+    tap::Pipe,
 };
 
 mod strategy;
@@ -18,9 +22,9 @@ mod relevant_types_can_be_limited {
     use super::*;
 
     #[allow(unreachable_code, unused_variables, clippy::diverging_sub_expression)]
-    fn can_be_limited<T: shear::str::LimitedExt>() {
+    fn can_be_limited<T: shear::str::Limited>() {
         let value: T = unimplemented!("");
-        value.trim_to_length_ascii(0).pipe(drop);
+        value.trim_to_length::<ellipsis::Ascii>(0).pipe(drop);
     }
 
     #[allow(dead_code)] // this is a compile-time check that needn't be called.
@@ -44,7 +48,7 @@ mod empty_str_can_be_limited {
     }
 
     fn empty_str_can_be_limited_(len: usize) {
-        "".trim_to_length_ascii(len)
+        "".trim_to_length::<ellipsis::Ascii>(len)
             .pipe(|s| assert_eq!(s, "", "limited string should still be empty"))
     }
 }
@@ -152,7 +156,7 @@ mod strs_can_be_truncated {
     }
 
     fn strs_can_be_truncated_(TestInput { value, length }: TestInput) {
-        let limited = value.clone().trim_to_length_ascii(length);
+        let limited = value.clone().trim_to_length::<ellipsis::Ascii>(length);
         let expected: Regex = {
             let prefix = {
                 let mut s = String::new();
