@@ -21,7 +21,7 @@ pub trait Limited: Iterator + Sized {
     }
 
     /// the type of iterator returned by [`Limited::contd()`].
-    type ContdIter: Iterator<Item = Self::Item>;
+    type ContdIter: IntoIterator<Item = Self::Item>;
 
     /// returns an iterator of values to use as an indication of truncation.
     ///
@@ -191,7 +191,7 @@ impl<I: Iterator + Limited> Inner<I> {
     /// returns a new [`Inner`].
     fn new(iter: I, total: usize) -> Self {
         // collect the continuation sequence, and find out how large it is.
-        let contd = I::contd().collect::<Vec<_>>();
+        let contd = I::contd().into_iter().collect::<Vec<_>>();
         let contd_size = contd.iter().map(I::element_size).sum();
 
         match total.checked_sub(contd_size) {
