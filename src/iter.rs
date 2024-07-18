@@ -21,12 +21,12 @@ pub trait Limited: Iterator + Sized {
     }
 
     /// the type of iterator returned by [`Limited::contd()`].
-    type ContdIter: IntoIterator<Item = Self::Item>;
+    type Contd: IntoIterator<Item = Self::Item>;
 
     /// returns an iterator of values to use as an indication of truncation.
     ///
     /// e.g. for strings, represented as an iterator of characters, one might use `"..."`.
-    fn contd() -> Self::ContdIter;
+    fn contd() -> Self::Contd;
 
     /// defines the size of an item in this iterator.
     ///

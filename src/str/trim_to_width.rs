@@ -31,9 +31,9 @@ where
         LimitedIter::new(self, size)
     }
 
-    type ContdIter = std::str::Chars<'static>;
+    type Contd = std::str::Chars<'static>;
 
-    fn contd() -> Self::ContdIter {
+    fn contd() -> Self::Contd {
         E::ellipsis().chars()
     }
 

@@ -13,10 +13,10 @@ impl<'a> From<Chars<'a>> for TestIter<'a> {
 }
 
 impl<'a> Limited for TestIter<'a> {
-    type ContdIter = std::array::IntoIter<char, 3>;
+    type Contd = std::str::Chars<'static>;
 
-    fn contd() -> Self::ContdIter {
-        ['.', '.', '.'].into_iter()
+    fn contd() -> Self::Contd {
+        "...".chars()
     }
 
     fn element_size(_: &Self::Item) -> usize {
