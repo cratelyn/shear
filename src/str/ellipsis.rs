@@ -12,6 +12,9 @@ pub struct Ascii;
 /// a more verbose ellipsis.
 pub struct Contd;
 
+/// an empty ellipsis.
+pub struct Empty;
+
 /// a horizontal utf-8 ellipsis.
 pub struct Horizontal;
 
@@ -28,6 +31,14 @@ impl Ellipsis for Ascii {
 impl Ellipsis for Contd {
     fn ellipsis() -> &'static str {
         "... (contd.)"
+    }
+}
+
+// === impl empty ===
+
+impl Ellipsis for Empty {
+    fn ellipsis() -> &'static str {
+        ""
     }
 }
 
