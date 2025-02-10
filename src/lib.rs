@@ -1,5 +1,4 @@
-//! a library for trimming excess contents from things.
-
+#![doc = include_str!("../README.md")]
 #![deny(
     // rustc lints:
     deprecated,
