@@ -11,6 +11,7 @@ use self::ellipsis::{Ascii, Contd, Horizontal};
 /// see [`Limited`] for more information.
 pub mod ellipsis;
 
+mod trim_to_height;
 mod trim_to_length;
 mod trim_to_width;
 
@@ -72,6 +73,9 @@ pub trait Limited {
 
     /// returns a string limited by width.
     fn trim_to_width<E: Ellipsis>(&self, length: usize) -> String;
+
+    /// returns a string limited by height.
+    fn trim_to_height<E: Ellipsis>(&self, height: usize) -> String;
 }
 
 // === impl s: asref<str> ===
@@ -114,5 +118,21 @@ where
             .pipe(TrimToWidthIter::<_, E>::new)
             .limited(width)
             .collect()
+    }
+
+    fn trim_to_height<E: Ellipsis>(&self, height: usize) -> String {
+        use {self::trim_to_height::TrimToHeightIter, crate::iter::Limited};
+
+        let value: &'_ str = self.as_ref();
+
+        if value.is_empty() || height == 0 {
+            return String::default();
+        }
+
+        TrimToHeightIter::<E>::new(value)
+            .limited(height)
+            .collect::<Vec<&str>>()
+            .as_slice()
+            .join("\n")
     }
 }

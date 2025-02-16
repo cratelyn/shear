@@ -189,3 +189,72 @@ mod strs_can_be_truncated {
         });
     }
 }
+
+mod strs_can_be_truncated_by_height {
+    use super::*;
+
+    const INPUT: &str = "\
+        first\n\
+        second\n\
+        third\
+    ";
+
+    #[test]
+    fn zero_lines_is_empty() {
+        INPUT
+            .trim_to_height::<ellipsis::Ascii>(0)
+            .pipe(|s| assert!(s.is_empty(), "{s} is not empty"))
+    }
+
+    #[test]
+    fn one_line_can_be_passed_through() {
+        "value"
+            .trim_to_height::<ellipsis::Empty>(1)
+            .pipe(|s| assert_eq!(s, "value"))
+    }
+
+    #[test]
+    fn one_line_with_a_trailing_newlines_can_be_passed_through() {
+        "value\n"
+            .trim_to_height::<ellipsis::Empty>(1)
+            .pipe(|s| assert_eq!(s, "value"))
+    }
+
+    #[test]
+    fn one_line_with_multiple_consecutibe_newlines_can_be_trimmed_to_a_height() {
+        "top\n\
+         \n\
+         \n\
+         bottom\n"
+            .trim_to_height::<ellipsis::Empty>(4)
+            .pipe(|s| {
+                assert_eq!(
+                    s,
+                    "\
+                    top\n\
+                    \n\
+                    \n\
+                    bottom"
+                )
+            })
+    }
+
+    #[test]
+    fn two_lines_tall() {
+        "\
+            first\n\
+            second\n\
+            third\
+        "
+        .trim_to_height::<ellipsis::Ascii>(2)
+        .pipe(|s| {
+            assert_eq!(
+                s,
+                "\
+                    first\n\
+                    ...\
+                ",
+            )
+        });
+    }
+}
